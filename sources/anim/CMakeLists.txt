@@ -1,0 +1,47 @@
+set(SAMPLE_NAME "anim")
+set(SHADER_DIR "shaders")
+set(NANOVG_DIR "nanovg")
+set(SAMPLE_DIR "sample")
+
+project(${SAMPLE_NAME})
+file(GLOB HEADER_LIST *.h *.hpp)
+file(GLOB SOURCE_LIST *.c *.cpp *.mm)
+source_group("sources" FILES ${HEADER_LIST} ${SOURCE_LIST})
+
+file(GLOB NANOVG "${NANOVG_DIR}/*.h" "${NANOVG_DIR}/*.cpp" "${NANOVG_DIR}/*.c")
+source_group("nanovg" FILES ${NANOVG})
+
+file(GLOB SAMPLE "${SAMPLE_DIR}/*.h" "${SAMPLE_DIR}/*.cpp" "${SAMPLE_DIR}/*.c")
+source_group("sample" FILES ${SAMPLE})
+
+set(SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${SAMPLE_NAME})
+file(GLOB SHADERS "${SHADER_DIR}/*.vert" "${SHADER_DIR}/*.frag" "${SHADER_DIR}/*.comp" "${SHADER_DIR}/*.geom" "${SHADER_DIR}/*.tesc" "${SHADER_DIR}/*.tese" "${SHADER_DIR}/*.mesh")
+source_group("shaders" FILES ${SHADERS})
+
+add_executable(${SAMPLE_NAME} ${HEADER_LIST} ${SOURCE_LIST} ${SHADERS} ${NANOVG} ${SAMPLE})
+
+target_compile_definitions(${SAMPLE_NAME} PRIVATE -DEL_DEFINE_SAMPLE_PATH=\"${SAMPLE_FOLDER}/\")
+target_compile_definitions(${SAMPLE_NAME} PRIVATE -DEL_DEFINE_RESOURCE_PATH=\"${CMAKE_SOURCE_DIR}/resource/\")
+
+target_include_directories(${SAMPLE_NAME} PRIVATE "")
+target_include_directories(${SAMPLE_NAME} PRIVATE ${ROOT_PATH}/sources)
+target_include_directories(${SAMPLE_NAME} PRIVATE ${ROOT_PATH}/sources/anim/${NANOVG_DIR})
+target_include_directories(${SAMPLE_NAME} PRIVATE ${ROOT_PATH}/sources/anim/${SAMPLE_DIR})
+target_include_directories(${SAMPLE_NAME} PRIVATE ${glad_SOURCE_DIR}/include)
+target_include_directories(${SAMPLE_NAME} PRIVATE ${GLFW_SOURCE_DIR}/include)
+target_include_directories(${SAMPLE_NAME} PRIVATE ${imgui_SOURCE_DIR})
+
+target_link_libraries(${SAMPLE_NAME} PRIVATE "imgui")
+target_link_libraries(${SAMPLE_NAME} PRIVATE "glfw")
+target_link_libraries(${SAMPLE_NAME} PRIVATE "glad")
+target_link_libraries(${SAMPLE_NAME} PRIVATE "stbi")
+if(APPLE)
+    target_link_libraries(${SAMPLE_NAME} PRIVATE "-framework AppKit")
+endif()
+if(BUILD_METAL)
+    target_link_libraries(${SAMPLE_NAME} PRIVATE "-framework Metal")
+    target_link_libraries(${SAMPLE_NAME} PRIVATE "-framework MetalKit")
+endif()
+set_target_properties(${SAMPLE_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set_target_properties(${SAMPLE_NAME} PROPERTIES PROJECT_LABEL ${SAMPLE_NAME})
+set_target_properties(${SAMPLE_NAME} PROPERTIES FOLDER "sources")
