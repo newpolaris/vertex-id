@@ -18,4 +18,3 @@ public:
 	inline virtual void NanoGui(NVGcontext* inContext) { }
 	inline virtual void Shutdown() { }
 };
-

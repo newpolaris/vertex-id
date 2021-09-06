@@ -7,12 +7,13 @@ Profile::Profile(void* hwnd)
 	int frameCounter = 0;
 
 	bool enableFrameTiming = true;
-	if (!QueryPerformanceFrequency(&timerFrequency)) {
-		std::cout << "WinMain: QueryPerformanceFrequency failed\n";
-		enableFrameTiming = false;
-	}
+	// if (!QueryPerformanceFrequency(&timerFrequency)) {
+	// 	std::cout << "WinMain: QueryPerformanceFrequency failed\n";
+	// 	enableFrameTiming = false;
+	// }
 
 	// Get Display Frequency
+#if 0
 	HMONITOR hMonitor = MonitorFromWindow((HWND)hwnd, MONITOR_DEFAULTTOPRIMARY);
 	MONITORINFOEX monitorInfo;
 	monitorInfo.cbSize = sizeof(MONITORINFOEX);
@@ -22,11 +23,13 @@ Profile::Profile(void* hwnd)
 	devMode.dmDriverExtra = 0;
 	EnumDisplaySettings(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode);
 	displayFrequency = (int)devMode.dmDisplayFrequency;
+#endif
+    
 	frameBudget = (1000.0 / (double)displayFrequency);
 	std::cout << "Display frequency: " << displayFrequency << "\n";
 	std::cout << "Frame budget: " << frameBudget << " milliseconds\n";
 
-	lastTick = GetTickCount();
+	// lastTick = GetTickCount();
 
 	glGenQueries(1, &gGpuApplicationStart);
 	glGenQueries(1, &gGpuApplicationStop);
@@ -45,43 +48,43 @@ Profile::~Profile()
 void Profile::EventMessageStart()
 {
     // Win32 events
-    QueryPerformanceCounter(&timerStart);
+    // QueryPerformanceCounter(&timerStart);
 }
 
 void Profile::EventMessageStop()
 {
-    QueryPerformanceCounter(&timerStop);
-    timerDiff = timerStop.QuadPart - timerStart.QuadPart;
-    accumulator.win32Events += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
+    // QueryPerformanceCounter(&timerStop);
+    // timerDiff = timerStop.QuadPart - timerStart.QuadPart;
+    // accumulator.win32Events += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
 }
 
 void Profile::EventUpdateStart()
 {
-    QueryPerformanceCounter(&frameStart);
+    // QueryPerformanceCounter(&frameStart);
 
     // Update
-    QueryPerformanceCounter(&timerStart);
-    DWORD thisTick = GetTickCount();
-    float deltaTime = float(thisTick - lastTick) * 0.001f;
-    lastTick = thisTick;
-    accumulator.deltaTime += deltaTime;
+    // QueryPerformanceCounter(&timerStart);
+    // DWORD thisTick = GetTickCount();
+    // float deltaTime = float(thisTick - lastTick) * 0.001f;
+    // lastTick = thisTick;
+    // accumulator.deltaTime += deltaTime;
 }
 
 void Profile::EventUpdateStop()
 {
-    QueryPerformanceCounter(&timerStop);
-    timerDiff = timerStop.QuadPart - timerStart.QuadPart;
-    accumulator.frameUpdate += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
+    // QueryPerformanceCounter(&timerStop);
+    // timerDiff = timerStop.QuadPart - timerStart.QuadPart;
+    // accumulator.frameUpdate += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
 }
 
 void Profile::EventRenderStart()
 {
     // Render
-    QueryPerformanceCounter(&timerStart);
+    // QueryPerformanceCounter(&timerStart);
 
     if (!firstRenderSample) { // Application GPU Timer
         glGetQueryObjectiv(gGpuApplicationStop, GL_QUERY_RESULT, &timerResultAvailable);
-        while (!timerResultAvailable) {
+        while (false) { // }!timerResultAvailable) {
             std::cout << "Waiting on app GPU timer!\n";
             glGetQueryObjectiv(gGpuApplicationStop, GL_QUERY_RESULT, &timerResultAvailable);
         }
@@ -96,32 +99,32 @@ void Profile::EventRenderStop()
 {
     glQueryCounter(gGpuApplicationStop, GL_TIMESTAMP);
 
-    QueryPerformanceCounter(&timerStop);
-    timerDiff = timerStop.QuadPart - timerStart.QuadPart;
-    accumulator.frameRender += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
+    // QueryPerformanceCounter(&timerStop);
+    // timerDiff = timerStop.QuadPart - timerStart.QuadPart;
+    // accumulator.frameRender += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
 }
 
 void Profile::EventUIUpdateStart()
 {
     // IMGUI Update
-    QueryPerformanceCounter(&timerStart);
+    // QueryPerformanceCounter(&timerStart);
 }
 
 void Profile::EventUIUpdateStop()
 {
-    QueryPerformanceCounter(&timerStop);
-    timerDiff = timerStop.QuadPart - timerStart.QuadPart;
-    accumulator.imguiLogic += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
+    // QueryPerformanceCounter(&timerStop);
+    // timerDiff = timerStop.QuadPart - timerStart.QuadPart;
+    // accumulator.imguiLogic += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
 }
 
 void Profile::EventUIRenderStart()
 {
     // Imgui Render
-    QueryPerformanceCounter(&timerStart);
+    // QueryPerformanceCounter(&timerStart);
 
     if (!firstRenderSample) { // Imgui GPU Timer
         glGetQueryObjectiv(gGpuImguiStop, GL_QUERY_RESULT, &timerResultAvailable);
-        while (!timerResultAvailable) {
+        while (false) { // }!timerResultAvailable) {
             std::cout << "Waiting on imgui GPU timer!\n";
             glGetQueryObjectiv(gGpuImguiStop, GL_QUERY_RESULT, &timerResultAvailable);
         }
@@ -137,27 +140,27 @@ void Profile::EventUIRenderStop()
 {
     glQueryCounter(gGpuImguiStop, GL_TIMESTAMP);
 
-    QueryPerformanceCounter(&timerStop);
-    timerDiff = timerStop.QuadPart - timerStart.QuadPart;
-    accumulator.imguiRender += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
+    // QueryPerformanceCounter(&timerStop);
+    // timerDiff = timerStop.QuadPart - timerStart.QuadPart;
+    // accumulator.imguiRender += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
 }
         
 void Profile::EventSwapStart()
 {
     // Wait for GPU
-    QueryPerformanceCounter(&timerStart);
+    // QueryPerformanceCounter(&timerStart);
 }
 
 void Profile::EventSwapStop()
 {
-    QueryPerformanceCounter(&timerStop);
-    timerDiff = timerStop.QuadPart - timerStart.QuadPart;
-    accumulator.swapBuffer += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
+    // QueryPerformanceCounter(&timerStop);
+    // timerDiff = timerStop.QuadPart - timerStart.QuadPart;
+    // accumulator.swapBuffer += (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
 
-    QueryPerformanceCounter(&frameStop);
-    timerDiff = frameStop.QuadPart - frameStart.QuadPart;
-    double frameTime = (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
-    accumulator.frameTime += frameTime;
+    // QueryPerformanceCounter(&frameStop);
+    // timerDiff = frameStop.QuadPart - frameStart.QuadPart;
+    // double frameTime = (double)timerDiff * 1000.0 / (double)timerFrequency.QuadPart;
+    // accumulator.frameTime += frameTime;
 
     // Profiling house keeping
     firstRenderSample = false;

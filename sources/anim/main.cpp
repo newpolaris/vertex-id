@@ -1,7 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
+//#define GLFW_EXPOSE_NATIVE_WIN32
+// #include <GLFW/glfw3native.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -24,7 +24,7 @@
 #include "XmlViewer.h"
 #include "DecomposeSample.h"
 
-void APIENTRY openglCallback(GLenum source,
+void openglCallback(GLenum source,
     GLenum type,
     GLuint id,
     GLenum severity,
@@ -331,7 +331,7 @@ int main(int, char**)
     // Decide GL+GLSL versions
 #ifdef __APPLE__
     // GL 3.2 + GLSL 150
-    const char* glsl_version = "#version 150";
+    const char* glslVersion = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
@@ -377,7 +377,7 @@ int main(int, char**)
     }
     nvgCreateFont(vg, "sans", "Assets/Roboto-Regular.ttf");
 
-    Profile profile(glfwGetWin32Window(window));
+    Profile profile(nullptr); // glfwGetWin32Window(window));
 
     EnableOpenGLDebug();
 

@@ -30,7 +30,7 @@ Texture2DPtr createTexture(const std::string& path, bool vflip)
 
     FILE* fp = fopen(path.c_str(), "rb");
     if (fp == NULL)
-        return false;
+        return nullptr;
 
     fseek(fp, 0, SEEK_END);
     long length = ftell(fp);
@@ -47,7 +47,7 @@ Texture2DPtr createTexture(const std::string& path, bool vflip)
         (int)length, &width, &height, &nrComponents, 4);
 
     if (!imagedata)
-        return false;
+        return nullptr;
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 

@@ -1,8 +1,7 @@
 #pragma warning(disable : 26451)
 #include "Attribute.h"
 #undef APIENTRY
-#include <glad/glad.h>
-#include <glm/glm.hpp>
+
 
 #include "vec2.h"
 #include "vec3.h"
@@ -21,46 +20,6 @@ template Attribute<glm::vec2>;
 template Attribute<glm::vec3>;
 template Attribute<glm::vec4>;
 
-template<typename T>
-Attribute<T>::Attribute() {
-	glGenBuffers(1, &mHandle);
-	mCount = 0;
-}
-
-template<typename T>
-Attribute<T>::~Attribute() {
-	glDeleteBuffers(1, &mHandle);
-}
-
-template<typename T>
-void Attribute<T>::Set(T* inputArray, unsigned int arrayLength) {
-	mCount = arrayLength;
-	unsigned int size = sizeof(T);
-
-	glBindBuffer(GL_ARRAY_BUFFER, mHandle);
-	glBufferData(GL_ARRAY_BUFFER, size * mCount, inputArray, GL_STREAM_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-template<typename T>
-void Attribute<T>::Set(std::vector<T>& input) {
-	Set(&input[0], (unsigned int)input.size());
-}
-
-template<typename T>
-void Attribute<T>::BindTo(unsigned int slot) {
-	glBindBuffer(GL_ARRAY_BUFFER, mHandle);
-	glEnableVertexAttribArray(slot);
-	SetAttribPointer(slot);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-template<typename T>
-void Attribute<T>::UnBindFrom(unsigned int slot) {
-	glBindBuffer(GL_ARRAY_BUFFER, mHandle);
-	glDisableVertexAttribArray(slot);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
 
 template<typename T>
 unsigned int Attribute<T>::Count() {

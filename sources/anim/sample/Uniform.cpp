@@ -1,6 +1,5 @@
 #include "Uniform.h"
-#include <glad/glad.h>
-#include <glm/glm.hpp>
+
 
 #include "vec2.h"
 #include "vec3.h"
@@ -53,14 +52,4 @@ void Uniform<mat4>::Set(unsigned int slot, mat4* inputArray, unsigned int arrayL
 template<>
 void Uniform<glm::mat4>::Set(unsigned int slot, glm::mat4* inputArray, unsigned int arrayLength) {
 	glUniformMatrix4fv(slot, (GLsizei)arrayLength, false, (float*)&inputArray[0]);
-}
-
-template <typename T>
-void Uniform<T>::Set(unsigned int slot, const T& value) {
-	Set(slot, (T*)&value, 1);
-}
-
-template <typename T>
-void Uniform<T>::Set(unsigned int slot, std::vector<T>& value) {
-	Set(slot, &value[0], (unsigned int)value.size());
 }

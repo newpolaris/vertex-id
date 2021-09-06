@@ -1,3 +1,13 @@
+#version 150
+
+#if __VERSION__ >= 130
+   #define varying in
+   out vec4 mgl_FragColor;
+   #define texture2D texture
+ #else
+   #define mgl_FragColor gl_FragColor
+#endif
+
 varying vec2 v_texcoord;
 uniform vec2 u_viewport;
 uniform vec2 u_center;
@@ -12,5 +22,5 @@ void main() {
     vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
     if (r < 0.003)
         color = u_color;
-    gl_FragColor = color;
+    mgl_FragColor = color;
 }

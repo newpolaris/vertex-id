@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glad/glad.h>
-#include <windows.h>
+// #include <windows.h>
 #include <iostream>
 
 // CPU Frame Timers
@@ -24,17 +24,19 @@ struct FrameTimer {
 struct Profile
 {
 	// CPU timings
+#if 0
 	LARGE_INTEGER timerFrequency;
 	LARGE_INTEGER timerStart;
 	LARGE_INTEGER timerStop;
 	LARGE_INTEGER frameStart;
 	LARGE_INTEGER frameStop;
 	LONGLONG timerDiff;
-
+#endif
+    
     FrameTimer display;
     FrameTimer accumulator;
 
-    DWORD lastTick;
+    // DWORD lastTick;
 
 	// GPU Timers
 	bool slowFrame = false;

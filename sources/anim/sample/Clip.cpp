@@ -1,5 +1,6 @@
 #include "Clip.h"
 #include <cassert>
+#include <cmath>
 
 Clip::Clip() {
 	mName = "No name given";

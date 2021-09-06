@@ -1,3 +1,10 @@
+#version 150
+
+#if __VERSION__ >= 130
+   #define attribute in
+   #define varying out
+#endif
+
 attribute vec4 a_position;
 attribute vec3 a_color;
 attribute float a_size;

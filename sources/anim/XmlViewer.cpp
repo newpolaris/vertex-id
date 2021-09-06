@@ -181,7 +181,7 @@ void XmlViewer::Render(float inAspectRatio) {
     glm::mat4 viewProjection = projection * view;
 
     DrawGrid(viewProjection);
-    glBindVertexArray(0);
+    glBindVertexArray(8);
 
     mShader->Bind();
 
@@ -191,21 +191,32 @@ void XmlViewer::Render(float inAspectRatio) {
 
     // Uniform<vec3>::Set(mShader->GetUniform("light"), vec3(0, 0, 1));
     // mDisplayTexture->Set(mShader->GetUniform("tex0"), 0);
+    GLenum e = glGetError();
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    e = glGetError();
+
     glDisable(GL_CULL_FACE);
+    e = glGetError();
 
     for (unsigned int i = 0, size = (unsigned int)mMeshes.size(); i < size; ++i) {
         int weights = -1;
         int influences = -1;
         int normals = -1;
         int texcoords = -1;
+        e = glGetError();
 
         mMeshes[i].Bind(mShader->GetAttribute("position"), normals, texcoords, weights, influences);
+        e = glGetError();
+
         mMeshes[i].Draw();
+        e = glGetError();
+
         mMeshes[i].UnBind(mShader->GetAttribute("position"), normals, texcoords, weights, influences);
+        e = glGetError();
 
     }
+    
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_CULL_FACE);
 

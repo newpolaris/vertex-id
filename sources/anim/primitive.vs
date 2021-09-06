@@ -1,3 +1,10 @@
+#version 150
+
+#if __VERSION__ >= 130
+   #define attribute in
+   #define varying out
+#endif
+
 attribute vec3 a_position;
 attribute vec3 a_normal;
 attribute vec2 a_texcoord;
