@@ -44,8 +44,8 @@ bool GpbMesh::parse(pugi::xpath_node& node) {
     id = mesh.attribute("id").value();
 
     for (pugi::xml_node element : mesh.children("VertexElement")) {
-        element.child("usage").text().get();
-        element.child("size").text().get();
+        std::string usage = element.child("usage").text().get();
+        int size = element.child("size").text().as_int();
     }
     pugi::xml_node vertices = mesh.child("vertices");
     size_t vcount = vertices.attribute("count").as_int();
@@ -56,6 +56,8 @@ bool GpbMesh::parse(pugi::xpath_node& node) {
 
     positions.reserve(vcount);
     normals.reserve(vcount);
+    tangents.reserve(vcount);
+    binormal.reserve(vcount);
     texcoords.reserve(vcount);
 
     while (std::getline(input, line)) {
@@ -67,6 +69,14 @@ bool GpbMesh::parse(pugi::xpath_node& node) {
             glm::vec3 n;
             input >> n.x >> n.y >> n.z;
             normals.push_back(n);
+        } else if (line.rfind("// tanget", 0) == 0) {
+            glm::vec3 t;
+            input >> t.x >> t.y >> t.z;
+            tangents.push_back(t);
+        } else if (line.rfind("// binormal", 0) == 0) {
+            glm::vec3 b;
+            input >> b.x >> b.y >> b.z;
+            binormal.push_back(b);
         } else if (line.rfind("// texCoord", 0) == 0) {
             glm::vec2 t;
             input >> t.x >> t.y;

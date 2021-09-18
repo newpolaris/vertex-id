@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <Application.h>
 #include <glm/glm.hpp>
 #include "sample/Attribute.h"
@@ -20,6 +21,9 @@ struct MeshInformation {
 	float radius;
 };
 
+typedef std::vector<uint32_t> GridColType;
+typedef std::vector<GridColType> GridType;
+
 class XmlViewer : public Application {
 protected:
 	Shader* mShader;
@@ -29,14 +33,20 @@ protected:
 	IndexBuffer* mIndexBuffer;
 	Texture* mDisplayTexture;
 
-    Camera m_Camera;
-    CameraManipulate m_CameraControl;
+    int mMeshSelected = -1;
+
+    Camera mCamera;
+    CameraManipulate mCameraControl;
 
 	std::vector<Mesh> mMeshes;
 	std::vector<MeshInformation> mMeshInformations;
 
     glm::mat4 mParent;
     glm::mat4 mModel;
+
+    GridType mGrid; 
+    std::string mFilename;
+    std::filesystem::file_time_type mGridWriteTime;
 
 public:
 	void Initialize();
@@ -47,4 +57,12 @@ public:
     void NanoGui(NVGcontext* inContext);
 
     void LoadMeshes(const std::string& filename);
+
+    bool UpdateVertexGrid(const std::string& filename);
+    void RenderVertexGrid();
+
+    void UpdateMeshSelect(int select);
+    void UpdateMeshBoundings(int select);
+
+    void VerifyGridData();
 };
