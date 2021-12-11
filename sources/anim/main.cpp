@@ -21,7 +21,7 @@
 #include <nanovg_gl.h>
 
 #include "hud.h"
-#include "XmlViewer.h"
+#include "GpbVertexViewer.h"
 #include "DecomposeSample.h"
 
 void openglCallback(GLenum source,
@@ -146,7 +146,7 @@ std::shared_ptr<Application> Factory(EnumSample kSample)
     case EnumSample::kDecomposeSample:
         return std::make_shared<DecomposeSample>();
     case EnumSample::kXmlViewer:
-        return std::make_shared<XmlViewer>();
+        return std::make_shared<GpbVertexViewer>();
     };
     return nullptr;
 }
@@ -346,7 +346,7 @@ int main(int, char**)
 #endif
 
     // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(1600, 1200, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1600, 1200, "GPB Vertex viewer", NULL, NULL);
     if (window == NULL)
         return -1;
 
@@ -377,7 +377,7 @@ int main(int, char**)
     }
     nvgCreateFont(vg, "sans", "Assets/Roboto-Regular.ttf");
 
-    Profile profile(nullptr); // glfwGetWin32Window(window));
+    Profile profile(nullptr);
 
     EnableOpenGLDebug();
 
@@ -467,6 +467,8 @@ int main(int, char**)
 
     glfwDestroyWindow(window);
     glfwTerminate();
+
+    window = nullptr;
 
     return 0;
 }

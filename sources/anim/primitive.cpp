@@ -241,7 +241,8 @@ std::vector<PrimitiveVertex> ConeMesh(float height, float radius, size_t res) {
     return data;
 }
 
-// TODO: replace with https://github.com/caosdoar/spheres
+// TODO: 이건 단순히 코드와 공식이 안이뻐서 수정을 제안함 
+//        https://github.com/caosdoar/spheres
 std::vector<PrimitiveVertex> cubeMesh() {
     size_t m_count = 2u * 3u * 6u;
 

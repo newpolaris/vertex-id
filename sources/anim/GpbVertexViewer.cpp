@@ -1,4 +1,4 @@
-#include "XmlViewer.h"
+#include "GpbVertexViewer.h"
 
 #include <glad/glad.h>
 #include <nanovg.h>
@@ -24,56 +24,7 @@
 #include "imgui_input.h"
 #include "hud.h"
 
-std::vector<uint32_t> gpbXmlVertexId = {
-    42, 67, 69, 72, 90, 91,
-    65, 43, 44, 47, 62, 61,
-
-    66, 68, 70, 71, 88, 89,
-    39, 40, 45, 46, 60, 59,
-
-    129, 75, 74, 73, 84, 87,
-    38, 41, 49, 48, 55, 58,
-
-    36, 76, 77, 78, 83, 85,
-    128, 37, 50, 51, 53, 56,
-
-    35, 81, 80, 79, 82, 86,
-    126, 33, 34, 52, 54, 57,
-
-    32, 29, 27, 28, 64, 63,
-    123, 124, 125, 127, 93, 92,
-
-    31, 26, 21, 20, 18, 19,
-    122, 120, 121, 100, 95, 94,
-
-    30, 25, 22, 17, 15, 14,
-    118, 119, 106, 101, 97, 96,
-
-    131, 24, 23, 16, 13, 12,
-    117, 114, 107, 102, 99, 98,
-
-    1, 3, 5, 6, 8, 10,
-    115, 112, 108, 105, 104, 103,
-
-    0, 2, 4, 7, 9, 11,
-    116, 113, 111, 110, 109, 130
-};
-
 typedef std::vector<uint32_t> GridColType;
-
-GridType upeyelashGrid {
-    { 186, 211, 63, 61, 62, 193, 192, 190, 191, 149, 147, 148, 175, 174, 172, 173 },
-    { 184, 208, 212, 32, 28, 30, 70, 69, 67, 68, 118, 114, 116, 156, 155, 153, 154 },
-    { 182, 204, 207, 31, 29, 27, 54, 53, 51, 52, 117, 115, 113, 140, 139, 137, 138 }, 
-    { 180, 199, 203, 22, 21, 20, 24, 23, 26, 25, 108, 107, 106, 110, 109, 112, 111 },
-    { 177, 195, 200, 13, 10, 5, 0, 2, 6, 8, 96, 98, 91, 86, 88, 92, 94 },
-    { 178, 196, 197, 11, 12, 4, 1, 3, 7, 9, 97, 99, 90, 87, 89, 93, 95 },
-    { 179, 198, 201, 36, 37, 33, 34, 35, 389, 39, 122, 123, 119, 120, 121, 124, 125 },
-    { 181, 202, 205, 49, 50, 47, 46, 48, 60, 59, 135, 136, 133, 132, 134, 146, 145 },
-    { 183, 206, 209, 58, 57, 56, 55, 18, 15, 17, 144, 143, 142, 141, 104, 101, 103 },
-    { 185, 210, 213, 74, 73, 72, 71, 19, 16, 14, 150, 159, 158, 157, 105, 102, 100 },
-    { 187, 214, 217, }
-};
 
 static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
 static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
@@ -178,7 +129,7 @@ void BeginFrame() {
     ImGui::PopStyleColor(2);
 }
 
-void XmlViewer::Initialize() {
+void GpbVertexViewer::Initialize() {
     mShader = new Shader("Shaders/static.vert", "Shaders/flat.frag");
     mDisplayTexture = new Texture("Assets/uv.png");
 
@@ -197,14 +148,14 @@ void XmlViewer::Initialize() {
     UpdateMeshBoundings(mMeshSelected);
 }
 
-void XmlViewer::UpdateMeshSelect(int select) {
+void GpbVertexViewer::UpdateMeshSelect(int select) {
     if (mMeshes.size() == 0)
         mMeshSelected = -1;
     else
         mMeshSelected = glm::clamp(select, 0, (int)mMeshes.size() - 1);
 }
 
-void XmlViewer::UpdateMeshBoundings(int select) {
+void GpbVertexViewer::UpdateMeshBoundings(int select) {
     if (select == -1)
         return;
 
@@ -219,7 +170,7 @@ void XmlViewer::UpdateMeshBoundings(int select) {
     mModel = glm::scale(glm::mat4(1.f), glm::vec3(scale));
 }
 
-void XmlViewer::LoadMeshes(const std::string& filename) 
+void GpbVertexViewer::LoadMeshes(const std::string& filename) 
 {
     assert(std::filesystem::exists(filename));
 
@@ -239,7 +190,7 @@ void XmlViewer::LoadMeshes(const std::string& filename)
     mMeshInformations = meshInformations;
 }
 
-bool XmlViewer::UpdateVertexGrid(const std::string& filename)
+bool GpbVertexViewer::UpdateVertexGrid(const std::string& filename)
 {
     if (!std::filesystem::exists(filename)) {
         printf("file not exist\n");
@@ -272,7 +223,7 @@ bool XmlViewer::UpdateVertexGrid(const std::string& filename)
     return true;
 }
 
-void XmlViewer::VerifyGridData()
+void GpbVertexViewer::VerifyGridData()
 {
     if (mMeshSelected < 0)
         return;
@@ -301,16 +252,16 @@ void XmlViewer::VerifyGridData()
         if (arr[i] == arr[i+1])
             duplicated.push_back(arr[i]);
     }
-    for (auto v : duplicated) {
+    for (auto& v : duplicated) {
         printf("array has duplicated value %d \n", v);
     }
-    float fillRate = (float)arr.size() / positions.size();
+    float fillRate = (float)arr.size() / positions.size() * 100;
     if (positions.size() < arr.size())
         printf("grid length overflow, expected %d <= actual %d\n", (int)positions.size(), (int)arr.size());
-    printf("fill rate : %3.1f%\n", fillRate*100.f);
+    printf("fill rate : %3.1f\n", fillRate);
 }
 
-void XmlViewer::RenderVertexGrid()
+void GpbVertexViewer::RenderVertexGrid()
 {
     glm::mat4 view = mCamera.GetViewMatrix();
     glm::mat4 projection = mCamera.GetProjectionMatrix();
@@ -341,7 +292,7 @@ void XmlViewer::RenderVertexGrid()
     }
 }
 
-void XmlViewer::Update(float inDeltaTime) {
+void GpbVertexViewer::Update(float inDeltaTime) {
     mCameraControl.UpdateCamera(mCamera, inDeltaTime);
 
     if (ImGui::IsKeyPressed('1'))
@@ -352,7 +303,7 @@ void XmlViewer::Update(float inDeltaTime) {
         mCurrentGizmoOperation = ImGuizmo::SCALE;
 }
 
-void XmlViewer::Render(float inAspectRatio) {
+void GpbVertexViewer::Render(float inAspectRatio) {
     mCamera.SetAspectRatio(inAspectRatio);
 
     glm::mat4 view = mCamera.GetViewMatrix();
@@ -362,7 +313,8 @@ void XmlViewer::Render(float inAspectRatio) {
 
     DrawGrid(viewProjection);
 
-    // TODO: !!
+    // TODO: OSX에서 에러 발견하여서 임시로 수정함
+    //       이걸만들때 vao가 8번이라서 확인후 여기서도 8로 해둔듯
     glBindVertexArray(8);
 
     mShader->Bind();
@@ -395,7 +347,7 @@ void XmlViewer::Render(float inAspectRatio) {
     mShader->UnBind();
 }
 
-void XmlViewer::ImGui(nk_context* inContext) {
+void GpbVertexViewer::ImGui(nk_context* inContext) {
     ImGui::Begin("Control");
     ImGui::Text("Camera:");
     ImGui::InputFloat3("Pos", (float*)&mCamera.Position);
@@ -524,7 +476,7 @@ void XmlViewer::ImGui(nk_context* inContext) {
                 auto ret = map.insert({position, {}});
                 it = ret.first;
             }
-            it->second.push_back(i);
+            it->second.push_back((uint32_t)i);
         }
 
         std::vector<std::pair<glm::vec3, std::vector<uint32_t>>> list;
@@ -551,7 +503,7 @@ void XmlViewer::ImGui(nk_context* inContext) {
     }
 }
 
-void XmlViewer::NanoGui(NVGcontext* inContext) {
+void GpbVertexViewer::NanoGui(NVGcontext* inContext) {
     glm::mat4 view = mCamera.GetViewMatrix();
     glm::mat4 projection = mCamera.GetProjectionMatrix();
     glm::mat4 mvp = projection * view * mModel;
@@ -578,7 +530,7 @@ void XmlViewer::NanoGui(NVGcontext* inContext) {
 #endif
 }
 
-void XmlViewer::Shutdown() {
+void GpbVertexViewer::Shutdown() {
     delete mShader;
     delete mDisplayTexture;
     delete mVertexPositions;

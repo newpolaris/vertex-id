@@ -6,7 +6,8 @@
 
 void CameraManipulate::UpdateCamera(Camera& camera, float inDeltaTime)
 {
-    // TODO: replace with MouseDelta (ShowDemoWindowMisc())
+    // TODO: MouseDelta를 이용하면 멤버 변수를 제거할 수 있지 않을까?
+    //       (ShowDemoWindowMisc())
     bool bViewportPanelMouseOver = ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow);
     if (bViewportPanelMouseOver)
         return;

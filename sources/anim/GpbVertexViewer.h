@@ -24,7 +24,7 @@ struct MeshInformation {
 typedef std::vector<uint32_t> GridColType;
 typedef std::vector<GridColType> GridType;
 
-class XmlViewer : public Application {
+class GpbVertexViewer : public Application {
 protected:
 	Shader* mShader;
 	Attribute<glm::vec3>* mVertexPositions;
