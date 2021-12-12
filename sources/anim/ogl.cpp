@@ -39,9 +39,6 @@ VertexArrayPtr createVertexArray(const VertexArrayDesc& desc) {
 
     const size_t vertexBytes = desc.vertexSize * vertexCount;
 
-    GLuint vao = 0;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, vertexBytes, desc.vertices, GL_DYNAMIC_DRAW);
 
@@ -70,22 +67,53 @@ VertexArrayPtr createVertexArray(const VertexArrayDesc& desc) {
             glVertexAttribPointer(i, compCnt, dataType, GL_FALSE, size, (const void*)offset);
     }
 
-    glBindVertexArray(0);
-
     auto vtxArr = std::make_shared<VertexArray>();
     if (vtxArr) {
-        vtxArr->id = vao;
         vtxArr->vbo = vbo;
         vtxArr->ibo = ibo;
         vtxArr->vertexCount = vertexCount;
         vtxArr->indexCount = indexCount;
+        vtxArr->desc = desc;
     }
     return vtxArr;
 }
 
-void bindVertexArray(const VertexArrayPtr& vao) {
+void bindVertexArray(const VertexArrayPtr& vao) 
+{
     assert(vao);
-    glBindVertexArray(vao->id);
+
+    GLuint vbo = vao->vbo;
+    GLuint ibo = vao->ibo;
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    auto size = vao->desc.layout->getSize();
+    const auto& elements = vao->desc.layout->getElements();
+
+    for (size_t i = 0; i < elements.size(); i++) {
+        const auto& e = elements[i];
+        auto compCnt = e.Count;
+        auto offset = e.Offset;
+        auto dataType = ShaderDataTypeToOpenGLBaseType(e.Type);
+        auto glBaseType = ShaderDataTypeToOpenGLBaseType(e.Type);
+        glEnableVertexAttribArray(i);
+        if (glBaseType == GL_INT)
+            glVertexAttribIPointer(i, compCnt, dataType, size, (const void*)offset);
+        else
+            glVertexAttribPointer(i, compCnt, dataType, GL_FALSE, size, (const void*)offset);
+    }
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+}
+
+void unbindVertexArray(const VertexArrayPtr& vao) 
+{
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    auto size = vao->desc.layout->getSize();
+    const auto& elements = vao->desc.layout->getElements();
+    for (size_t i = 0; i < elements.size(); i++)
+        glDisableVertexAttribArray(i);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 Framebuffer::Framebuffer()

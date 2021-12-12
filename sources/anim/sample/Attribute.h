@@ -77,5 +77,4 @@ void Attribute<T>::UnBindFrom(unsigned int slot) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-
 #endif

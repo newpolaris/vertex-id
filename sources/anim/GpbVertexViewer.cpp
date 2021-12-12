@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <sstream>
 #include <fstream>
+#include <string>
 
 #include "json.hpp"
 #include "ParseGpbXml.h"
@@ -313,9 +314,8 @@ void GpbVertexViewer::Render(float inAspectRatio) {
 
     DrawGrid(viewProjection);
 
-    // TODO: OSX에서 에러 발견하여서 임시로 수정함
-    //       이걸만들때 vao가 8번이라서 확인후 여기서도 8로 해둔듯
-    glBindVertexArray(8);
+    // TODO: OSX에서 에러 발견하여서 임시로 수정함, 이걸만들때 vao가 8번이라서 확인후 여기서도 8로 해둔듯
+    // glBindVertexArray(8);
 
     mShader->Bind();
 
@@ -330,6 +330,7 @@ void GpbVertexViewer::Render(float inAspectRatio) {
         if (i != mMeshSelected)
             continue;
 
+        // 필요한 것만 index를 주어서 bind
         int weights = -1;
         int influences = -1;
         int normals = -1;
@@ -501,6 +502,23 @@ void GpbVertexViewer::ImGui(nk_context* inContext) {
         }
     #endif
     }
+
+    static std::string s_AssetsDirectory = "Assets";
+
+    ImGui::Begin("Content Browser");
+    for (auto& p : std::filesystem::directory_iterator(s_AssetsDirectory)) {
+        std::string path = p.path().string();
+        auto p0 = p.path().filename().string();
+        auto p1 = p.path().stem().string();
+        ImGui::Text("Filename: %s", p0.c_str());
+        ImGui::Text("Stem: %s", p1.c_str());
+        if (p.is_directory()) {
+            if (ImGui::Button(path.c_str())) {
+            }
+        }
+    }
+
+    ImGui::End();
 }
 
 void GpbVertexViewer::NanoGui(NVGcontext* inContext) {

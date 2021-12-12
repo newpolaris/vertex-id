@@ -196,6 +196,7 @@ void DrawBlit(const glm::mat4& transform) {
 
     bindVertexArray(blitVao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    unbindVertexArray(blitVao);
 }
 
 void DrawLine(const glm::mat4& transform, const glm::vec4& p0, const glm::vec4& p1, const glm::vec3& color) {
@@ -258,7 +259,7 @@ void FlushLineDrawing() {
     glBindBuffer(GL_ARRAY_BUFFER, lineVao->vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, size, buffer.data());
 
-    glBindVertexArray(lineVao->id);
+    bindVertexArray(lineVao);
     glDisable(GL_DEPTH_TEST);
     // NOTE: core context requires below 1.0
     glLineWidth(1.0);
@@ -387,6 +388,7 @@ void DrawSphere(const glm::mat4& transform, const glm::vec3& position, const flo
     primitiveProgram->setUniform("u_transform", transformM);
     glDrawArrays(GL_TRIANGLES, 0, sphereVao->vertexCount);
     glDisable(GL_DEPTH_TEST);
+    unbindVertexArray(sphereVao);
 }
 
 void DrawCube(const glm::mat4& transform, const glm::vec3& position, const float scale) {
@@ -400,6 +402,7 @@ void DrawCube(const glm::mat4& transform, const glm::vec3& position, const float
     primitiveProgram->setUniform("u_transform", transformM);
     glDrawElements(GL_QUADS, cubeVao->indexCount, GL_UNSIGNED_INT, 0);
     glDisable(GL_DEPTH_TEST);
+    unbindVertexArray(cubeVao);
 }
 
 void DrawCube(const glm::mat4& transform, const glm::vec3& position, const glm::vec3& scale) {
@@ -413,6 +416,7 @@ void DrawCube(const glm::mat4& transform, const glm::vec3& position, const glm::
     cubeProgram->setUniform("u_transform", transformM);
     glDrawElements(GL_QUADS, cubeVao->indexCount, GL_UNSIGNED_INT, 0);
     glDisable(GL_DEPTH_TEST);
+    unbindVertexArray(cubeVao);
 }
 
 void DrawAxis(const glm::mat4& transform)
@@ -436,8 +440,8 @@ void DrawGrid(const glm::mat4& viewProjection)
 
     bindVertexArray(blitVao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-
     glEnable(GL_CULL_FACE);
+    unbindVertexArray(blitVao);
 }
 
 void initHUD() {

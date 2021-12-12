@@ -31,17 +31,18 @@ struct VertexArrayDesc {
 
 struct VertexArray
 {
-    GLuint id = 0;
     GLuint vbo = 0;
     GLuint ibo = 0;
     size_t vertexCount = 0;
     size_t indexCount = 0;
+    VertexArrayDesc desc;
 };
 
 typedef std::shared_ptr<struct VertexArray> VertexArrayPtr;
 
 VertexArrayPtr createVertexArray(const VertexArrayDesc& desc);
 void bindVertexArray(const VertexArrayPtr& vao);
+void unbindVertexArray(const VertexArrayPtr& vao);
 
 typedef std::shared_ptr<struct Framebuffer> FramebufferPtr;
 
