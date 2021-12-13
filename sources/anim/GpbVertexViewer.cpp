@@ -40,6 +40,9 @@ static bool boundSizingSnap = false;
 static bool showVertexIDs = true;
 static float fontSize = 15.f;
 
+constexpr char* s_gpbFilename = "Assets/deconeyelashes.gpb";
+constexpr char* s_gridJson = "Assets/parteyelashes.json";
+
 void from_json(const nlohmann::json& j, MeshParam& p) {
     assert(j.find("location") != j.end());
     assert(j.find("grid") != j.end());
@@ -221,9 +224,7 @@ void GpbVertexViewer::Initialize() {
     mShader = new Shader("Shaders/static.vert", "Shaders/flat.frag");
     mDisplayTexture = new Texture("Assets/uv.png");
 
-    constexpr char* gpbFilename = "Assets/parteyelashes.gpb";
-
-    LoadMeshes(gpbFilename);
+    LoadMeshes(s_gpbFilename);
 
     mCamera.Pitch = -30;
     mCamera.updateCameraVectors();
@@ -295,6 +296,9 @@ bool GpbVertexViewer::LoadGpb(const std::string& filename)
     std::vector<MeshInformation> meshInformations;
     el::ScenePtr scene = el::loadScene(filename);
     for (const auto& node : scene->_nodes) {
+        // Skip empty model: "CINEMA_4D_Editor"
+        if (!node->getDrawable())
+            continue;
         auto& src = node->getDrawable()->_meshData;
 
         Mesh mesh;
@@ -314,7 +318,6 @@ bool GpbVertexViewer::LoadGpb(const std::string& filename)
 bool GpbVertexViewer::UpdateVertexGrid()
 {
     constexpr size_t s_updateCycle = 30;
-    constexpr char* s_gridJson = "Assets/parteyelashes.json";
     if (s_frameCounter % s_updateCycle == 0)
         return UpdateVertexGridJson(s_gridJson);
     return true;
