@@ -7,13 +7,14 @@ Profile::Profile(void* hwnd)
 	int frameCounter = 0;
 
 	bool enableFrameTiming = true;
-	// if (!QueryPerformanceFrequency(&timerFrequency)) {
-	// 	std::cout << "WinMain: QueryPerformanceFrequency failed\n";
-	// 	enableFrameTiming = false;
-	// }
+
+#if _WIN32
+    if (!QueryPerformanceFrequency(&timerFrequency)) {
+        std::cout << "WinMain: QueryPerformanceFrequency failed\n";
+        enableFrameTiming = false;
+    }
 
 	// Get Display Frequency
-#if 0
 	HMONITOR hMonitor = MonitorFromWindow((HWND)hwnd, MONITOR_DEFAULTTOPRIMARY);
 	MONITORINFOEX monitorInfo;
 	monitorInfo.cbSize = sizeof(MONITORINFOEX);

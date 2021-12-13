@@ -1,7 +1,10 @@
 #pragma once
 
 #include <glad/glad.h>
-// #include <windows.h>
+#if _WIN32
+#define NOMINMAX 
+#include <windows.h>
+#endif
 #include <iostream>
 
 // CPU Frame Timers
@@ -24,7 +27,7 @@ struct FrameTimer {
 struct Profile
 {
 	// CPU timings
-#if 0
+#if _WIN32
 	LARGE_INTEGER timerFrequency;
 	LARGE_INTEGER timerStart;
 	LARGE_INTEGER timerStop;

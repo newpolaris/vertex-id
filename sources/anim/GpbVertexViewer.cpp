@@ -5,6 +5,7 @@
 #include <imgui.h>
 #include <ImGuizmo.h>
 #include <filesystem>
+#include <algorithm>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/hash.hpp>
 #include <unordered_map>
@@ -12,8 +13,8 @@
 #include <fstream>
 #include <string>
 
-#include "json.hpp"
 #include "ParseGpbXml.h"
+#include "gpb/ELNode.h"
 
 #include "sample/Draw.h"
 #include "sample/Uniform.h"
@@ -39,6 +40,18 @@ static bool boundSizingSnap = false;
 static bool showVertexIDs = true;
 static float fontSize = 15.f;
 
+void from_json(const nlohmann::json& j, MeshParam& p) {
+    assert(j.find("location") != j.end());
+    assert(j.find("grid") != j.end());
+    p.location = j.at("location").get<decltype(MeshParam::location)>();
+    p.grid = j.at("grid").get<decltype(MeshParam::grid)>();
+}
+
+void to_json(nlohmann::json& j, const MeshParam& p) {
+    j["location"] = p.location;
+    j["grid"] = p.grid;
+}
+
 template <typename T, typename U>
 void memcpy(std::vector<T>& dest, const std::vector<U>& src)
 {
@@ -60,6 +73,80 @@ void MeshFromGpbXml(Mesh& outMesh, GpbMesh& attributes)
     memcpy(indices, attributes.indices);
 
     outMesh.UpdateOpenGLBuffers();
+}
+
+void MeshFromGpb(Mesh& outMesh, const el::NodePtr& node)
+{
+    const auto& asset = node->getDrawable()->getMeshData();
+    const auto& format = asset->vertexFormat;
+    struct Attribute {
+        size_t offset = 0;
+    };
+
+    std::map<el::VertexFormat::Usage, size_t> offsets;
+    size_t offset = 0;
+    for (size_t i = 0; i < format.getElementCount(); i++) {
+        auto usage = format.getElement(i).usage;
+        offsets[usage] = offset;
+        offset += format.getElement(i).size * sizeof(float);
+    }
+
+    const auto vcount = asset->vertexCount;
+    const auto stride = format.getVertexSize();
+
+    auto posOffset = offsets[el::VertexFormat::POSITION];
+    auto normOffset = offsets[el::VertexFormat::NORMAL];
+    auto texOffset = offsets[el::VertexFormat::TEXCOORD0];
+
+    std::vector<vec3>& positions = outMesh.GetPosition();
+    std::vector<vec3>& normals = outMesh.GetNormal();
+    std::vector<vec2>& texcoords = outMesh.GetTexCoord();
+
+    positions.resize(vcount);
+    normals.resize(vcount);
+    texcoords.resize(vcount);
+
+    auto vertexData = (char*)asset->vertexData;
+    for (size_t i = 0; i < vcount; i++) {
+        auto data = vertexData + stride * i;
+        positions[i] = *(vec3*)(data+posOffset);
+        normals[i] = *(vec3*)(data+normOffset);
+        texcoords[i] = *(vec2*)(data+texOffset);
+    }
+
+    assert(asset->parts.size() == 1);
+    const auto& sourceIndices = asset->parts.front();
+    const auto icount = sourceIndices->indexCount;
+
+    std::vector<unsigned int>& indices= outMesh.GetIndices();
+    indices.resize(icount);
+
+    auto& indicesData = sourceIndices->indexData;
+    for (size_t i = 0; i < icount; i++) {
+        switch (sourceIndices->indexFormat) {
+        case el::Mesh::INDEX16:
+            indices[i] = ((uint16_t*)indicesData)[i];
+            break;
+        case el::Mesh::INDEX32:
+            indices[i] = ((uint32_t*)indicesData)[i];
+            break;
+        }
+    }
+
+    outMesh.UpdateOpenGLBuffers();
+}
+
+void MeshInformationFromGpb(MeshInformation& outInfo, const el::NodePtr& node)
+{
+    const auto& asset = node->getDrawable()->getMeshData();
+    MeshInformation infomation = {
+        node->getId(),
+        asset->boundingBox.min,
+        asset->boundingBox.max,
+        asset->boundingSphere.center,
+        asset->boundingSphere.radius,
+    };
+    outInfo = infomation;
 }
 
 glm::vec2 GetScreenPos(const glm::mat4& mvp, const glm::mat4& sp, const glm::vec4& p) 
@@ -134,12 +221,9 @@ void GpbVertexViewer::Initialize() {
     mShader = new Shader("Shaders/static.vert", "Shaders/flat.frag");
     mDisplayTexture = new Texture("Assets/uv.png");
 
-    // LoadMeshes("Assets/captest5.xml");
-    // LoadMeshes("Assets/custom_blendshape.xml");
-    // LoadMeshes("Assets/RightUpper.xml");
-    // LoadMeshes("Assets/RightU.xml");
-    // LoadMeshes("Assets/eyelashesns.xml");
-    LoadMeshes("Assets/parteyelashes.xml");
+    constexpr char* gpbFilename = "Assets/parteyelashes.gpb";
+
+    LoadMeshes(gpbFilename);
 
     mCamera.Pitch = -30;
     mCamera.updateCameraVectors();
@@ -171,7 +255,17 @@ void GpbVertexViewer::UpdateMeshBoundings(int select) {
     mModel = glm::scale(glm::mat4(1.f), glm::vec3(scale));
 }
 
-void GpbVertexViewer::LoadMeshes(const std::string& filename) 
+bool GpbVertexViewer::LoadMeshes(const std::string& filename) 
+{
+    auto extension = std::filesystem::path(filename).extension().string();
+    if (extension == ".xml")
+        return LoadGpbXml(filename);
+    else if (extension == ".gpb")
+        return LoadGpb(filename);
+    return false;
+}
+
+bool GpbVertexViewer::LoadGpbXml(const std::string& filename) 
 {
     assert(std::filesystem::exists(filename));
 
@@ -187,22 +281,57 @@ void GpbVertexViewer::LoadMeshes(const std::string& filename)
         MeshInformation infomation = {src.id, src.min, src.max, src.center, src.radius };
         meshInformations.push_back(infomation);
     }
-    mMeshes = meshes;
-    mMeshInformations = meshInformations;
+    std::swap(mMeshes, meshes);
+    std::swap(mMeshInformations, meshInformations);
+
+    return true;
 }
 
-bool GpbVertexViewer::UpdateVertexGrid(const std::string& filename)
+bool GpbVertexViewer::LoadGpb(const std::string& filename)
+{
+    assert(std::filesystem::exists(filename));
+
+    std::vector<Mesh> meshes;
+    std::vector<MeshInformation> meshInformations;
+    el::ScenePtr scene = el::loadScene(filename);
+    for (const auto& node : scene->_nodes) {
+        auto& src = node->getDrawable()->_meshData;
+
+        Mesh mesh;
+        MeshFromGpb(mesh, node);
+        MeshInformation infomation;
+        MeshInformationFromGpb(infomation, node);
+        meshes.push_back(mesh);
+        meshInformations.push_back(infomation);
+    }
+
+    std::swap(mMeshes, meshes);
+    std::swap(mMeshInformations, meshInformations);
+
+    return true;
+}
+
+bool GpbVertexViewer::UpdateVertexGrid()
+{
+    constexpr size_t s_updateCycle = 30;
+    constexpr char* s_gridJson = "Assets/parteyelashes.json";
+    if (s_frameCounter % s_updateCycle == 0)
+        return UpdateVertexGridJson(s_gridJson);
+    return true;
+}
+
+bool GpbVertexViewer::UpdateVertexGridJson(const std::string& filename)
 {
     if (!std::filesystem::exists(filename)) {
         printf("file not exist\n");
         return false;
     }
     auto lastWriteTime = std::filesystem::last_write_time(filename);
-    if (mFilename == filename && lastWriteTime <= mGridWriteTime) {
+    if (mFilename == filename && lastWriteTime <= mMeshParamWriteTime) {
         return true;
     }
     mFilename = filename;
-    mGridWriteTime = lastWriteTime;
+    mMeshParamWriteTime = lastWriteTime;
 
     using json = nlohmann::json;
     std::ifstream in(filename);
@@ -215,9 +344,14 @@ bool GpbVertexViewer::UpdateVertexGrid(const std::string& filename)
         printf("%s\n", ex.what());
         return false;
     }
-    GridType grid = j;
+    MeshParamMap map = j;
 
-    std::swap(mGrid, grid);
+    std::vector<std::string> names;
+    for (const auto& m : map)
+        names.push_back(m.first);
+
+    std::swap(mMeshParamNames, names);
+    std::swap(mMeshParam, map);
 
     VerifyGridData();
 
@@ -229,12 +363,18 @@ void GpbVertexViewer::VerifyGridData()
     if (mMeshSelected < 0)
         return;
 
+    if (mMeshParamSelected < 0)
+        return;
+
     // check if valid vertex id
     Mesh& mesh = mMeshes[mMeshSelected];
     const std::vector<vec3>& positions = mesh.GetPosition();
 
-    for (size_t i = 0; i < mGrid.size(); i++) {
-        const GridColType& col = mGrid[i];
+    const std::string paramName = mMeshParamNames[mMeshParamSelected];
+    const MeshVertexGrid& grid = mMeshParam[paramName].grid;
+
+    for (size_t i = 0; i < grid.size(); i++) {
+        const GridColType& col = grid[i];
         for (size_t j = 0; j < col.size(); j++) {
             if (col[j] < 0)
                 printf("[%d][%d] has nagative value %d\n", (int)i, (int)j, col[j]);
@@ -245,7 +385,7 @@ void GpbVertexViewer::VerifyGridData()
 
     // vertify grid data
     GridColType arr;
-    for (auto& col : mGrid)
+    for (const auto& col : grid)
         arr.insert(arr.end(), std::begin(col), std::end(col));
     std::sort(arr.begin(), arr.end());
     GridColType duplicated;
@@ -272,12 +412,19 @@ void GpbVertexViewer::RenderVertexGrid()
     glm::vec2 viewport(io.DisplaySize.x, io.DisplaySize.y);
     glm::mat4 toScreen = GetViewportTransform(viewport);
 
+    if (mMeshSelected < 0)
+        return;
+    if (mMeshParamSelected < 0)
+        return;
     Mesh& mesh = mMeshes[mMeshSelected];
     const std::vector<vec3>& positions = mesh.GetPosition();
 
-    for (size_t i = 0; i < mGrid.size(); i++) {
-        float r = (float)i / mGrid.size();
-        const GridColType& col = mGrid[i];
+    const std::string paramName = mMeshParamNames[mMeshParamSelected];
+    const MeshVertexGrid& grid = mMeshParam[paramName].grid;
+
+    for (size_t i = 0; i < grid.size(); i++) {
+        float r = (float)i / grid.size();
+        const GridColType& col = grid[i];
         for (size_t j = 0; j < col.size(); j++) {
             float g = (float)j / col.size();
             ImU32 color = ImGui::GetColorU32(ImVec4(r, g, 0.f, 1.f));
@@ -302,6 +449,9 @@ void GpbVertexViewer::Update(float inDeltaTime) {
         mCurrentGizmoOperation = ImGuizmo::ROTATE;
     if (ImGui::IsKeyPressed('3'))
         mCurrentGizmoOperation = ImGuizmo::SCALE;
+
+    UpdateVertexGrid();
+    s_frameCounter++;
 }
 
 void GpbVertexViewer::Render(float inAspectRatio) {
@@ -348,7 +498,8 @@ void GpbVertexViewer::Render(float inAspectRatio) {
     mShader->UnBind();
 }
 
-void GpbVertexViewer::ImGui(nk_context* inContext) {
+void GpbVertexViewer::ImGui(nk_context* inContext) 
+{
     ImGui::Begin("Control");
     ImGui::Text("Camera:");
     ImGui::InputFloat3("Pos", (float*)&mCamera.Position);
@@ -356,12 +507,29 @@ void GpbVertexViewer::ImGui(nk_context* inContext) {
 
     int meshCount = (int)mMeshInformations.size();
     std::vector<const char*> meshNames;
-    for (auto& info : mMeshInformations)
+    for (const auto& info : mMeshInformations)
         meshNames.push_back(info.id.c_str());
-    if (ImGui::Combo("name", &mMeshSelected, meshNames.data(), meshCount)) {
-        UpdateMeshBoundings(mMeshSelected);
+    if (ImGui::Combo("meshes", &mMeshSelected, meshNames.data(), meshNames.size())) {
+        if (mbUpdateMeshCenter)
+            UpdateMeshBoundings(mMeshSelected);
+        if (mbUpdateParamSelected && mMeshSelected >= 0) {
+            auto selected = std::string(meshNames[mMeshSelected]);
+            for (size_t i = 0; i < mMeshParamNames.size(); i++) {
+                if (selected == mMeshParamNames[i]) {
+                    mMeshParamSelected = i;
+                    break;
+                }
+            }
+        }
         VerifyGridData();
     }
+    std::vector<const char*> paramNames;
+    for (const auto& names : mMeshParamNames)
+        paramNames.push_back(names.c_str());
+    if (ImGui::Combo("params", &mMeshParamSelected, paramNames.data(), paramNames.size())) {
+    }
+    ImGui::Checkbox("Update Mesh Center", &mbUpdateMeshCenter);
+    ImGui::Checkbox("Sync Param Select", &mbUpdateParamSelected);
 
     ImGui::Separator();
     ImGui::Checkbox("Display Gizmo", &displayGizmo);
@@ -453,11 +621,10 @@ void GpbVertexViewer::ImGui(nk_context* inContext) {
         SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
         ImU32 white = ImGui::GetColorU32(ImVec4(1.f, 1.f, 1.f, 1.f));
 
-        static int i = 0;
-        if (i++ % 30 == 0)
-            UpdateVertexGrid("Assets/parteyelahedown2.json");
         RenderVertexGrid();
 
+        if (mMeshSelected < 0)
+            return;
         Mesh& mesh = mMeshes[mMeshSelected];
     #if 0
         const std::vector<vec3>& positions = mesh.GetPosition();
@@ -502,7 +669,11 @@ void GpbVertexViewer::ImGui(nk_context* inContext) {
         }
     #endif
     }
+    // ImGuiContents(inContext);
+}
 
+void GpbVertexViewer::ImGuiContents(nk_context* inContext)
+{
     static std::string s_AssetsDirectory = "Assets";
 
     ImGui::Begin("Content Browser");
@@ -517,7 +688,6 @@ void GpbVertexViewer::ImGui(nk_context* inContext) {
             }
         }
     }
-
     ImGui::End();
 }
 

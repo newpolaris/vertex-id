@@ -3,9 +3,11 @@
 #include <filesystem>
 #include <Application.h>
 #include <glm/glm.hpp>
+#include <string>
 #include "sample/Attribute.h"
 #include "sample/Mesh.h"
 #include "camera.h"
+#include "json.hpp"
 #include "CameraManipulate.h"
 
 class Shader;
@@ -21,8 +23,30 @@ struct MeshInformation {
 	float radius;
 };
 
-typedef std::vector<uint32_t> GridColType;
-typedef std::vector<GridColType> GridType;
+enum class EyelashLocationType {
+    LeftUpper, LeftLower, RightUpper, RightLower
+};
+
+// map TaskState values to JSON as strings
+NLOHMANN_JSON_SERIALIZE_ENUM(EyelashLocationType, {
+    {EyelashLocationType::LeftUpper, "LeftUpper"},
+    {EyelashLocationType::LeftLower, "LeftLower"},
+    {EyelashLocationType::RightUpper, "RightUpper"},
+    {EyelashLocationType::RightLower, "RightLower"},
+})
+
+using MeshColType = std::vector<std::uint32_t>;
+using MeshVertexGrid = std::vector<MeshColType>;
+
+class MeshParam {
+public:
+    // ¼Ó´«½ç ºÎÂøµÉ À§Ä¡
+    EyelashLocationType location;
+    // mesh »óÀÇ vertex id¸¦ 2D ±×¸®µå»ó¿¡ ³ªÅ¸³¿
+    MeshVertexGrid grid;
+};
+
+using MeshParamMap = std::map<std::string, MeshParam>;
 
 class GpbVertexViewer : public Application {
 protected:
@@ -33,6 +57,9 @@ protected:
 	IndexBuffer* mIndexBuffer;
 	Texture* mDisplayTexture;
 
+    size_t s_frameCounter = 0;
+    bool mbUpdateParamSelected = true;
+    bool mbUpdateMeshCenter = true;
     int mMeshSelected = -1;
 
     Camera mCamera;
@@ -44,9 +71,12 @@ protected:
     glm::mat4 mParent;
     glm::mat4 mModel;
 
-    GridType mGrid; 
+    int mMeshParamSelected = -1;
+    std::vector<std::string> mMeshParamNames;
+    MeshParamMap mMeshParam; 
+
     std::string mFilename;
-    std::filesystem::file_time_type mGridWriteTime;
+    std::filesystem::file_time_type mMeshParamWriteTime;
 
 public:
 	void Initialize();
@@ -54,11 +84,15 @@ public:
 	void Render(float inAspectRatio);
 	void Shutdown();
     void ImGui(nk_context* inContext);
+    void ImGuiContents(nk_context* inContext);
     void NanoGui(NVGcontext* inContext);
 
-    void LoadMeshes(const std::string& filename);
+    bool LoadMeshes(const std::string& filename);
+    bool LoadGpbXml(const std::string& filename);
+    bool LoadGpb(const std::string& filename);
 
-    bool UpdateVertexGrid(const std::string& filename);
+    bool UpdateVertexGrid();
+    bool UpdateVertexGridJson(const std::string& filename);
     void RenderVertexGrid();
 
     void UpdateMeshSelect(int select);
