@@ -40,8 +40,13 @@ static bool boundSizingSnap = false;
 static bool showVertexIDs = true;
 static float fontSize = 15.f;
 
+#if 0
 constexpr char* s_gpbFilename = "Assets/deconeyelashes.gpb";
-constexpr char* s_gridJson = "Assets/parteyelashes.json";
+constexpr char* s_gridJson = "Assets/deconeyelashes.json";
+#else
+constexpr char* s_gpbFilename = "Assets/eyelashesns.gpb";
+constexpr char* s_gridJson = "Assets/dectheyelashes.json";
+#endif
 
 void from_json(const nlohmann::json& j, MeshParam& p) {
     assert(j.find("location") != j.end());
@@ -399,7 +404,7 @@ void GpbVertexViewer::VerifyGridData()
     for (auto& v : duplicated) {
         printf("array has duplicated value %d \n", v);
     }
-    float fillRate = (float)arr.size() / positions.size() * 100;
+    const float fillRate = (float)arr.size() / positions.size() * 100;
     if (positions.size() < arr.size())
         printf("grid length overflow, expected %d <= actual %d\n", (int)positions.size(), (int)arr.size());
     printf("fill rate : %3.1f\n", fillRate);
