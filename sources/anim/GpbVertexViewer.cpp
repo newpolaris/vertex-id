@@ -44,8 +44,8 @@ static float fontSize = 15.f;
 constexpr char* s_gpbFilename = "Assets/deconeyelashes.gpb";
 constexpr char* s_gridJson = "Assets/deconeyelashes.json";
 #else
-constexpr char* s_gpbFilename = "Assets/eyelashesns.gpb";
-constexpr char* s_gridJson = "Assets/dectheyelashes.json";
+constexpr char* s_gpbFilename = "Assets/eyelasheseyecover.gpb";
+constexpr char* s_gridJson = "Assets/eyelasheseyecover.json";
 #endif
 
 void from_json(const nlohmann::json& j, MeshParam& p) {
@@ -408,6 +408,14 @@ void GpbVertexViewer::VerifyGridData()
     if (positions.size() < arr.size())
         printf("grid length overflow, expected %d <= actual %d\n", (int)positions.size(), (int)arr.size());
     printf("fill rate : %3.1f\n", fillRate);
+    if (positions.size() - arr.size() < 3) {
+        for (size_t i = 0; i < arr.size(); i++) {
+            if (i != arr[i]) {
+                printf("missing one %d\n", i);
+                break;
+            }
+        }
+    }
 }
 
 void GpbVertexViewer::RenderVertexGrid()
