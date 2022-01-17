@@ -24,7 +24,7 @@ struct MeshInformation {
 };
 
 enum class EyelashLocationType {
-    LeftUpper, LeftLower, RightUpper, RightLower
+    LeftUpper, LeftLower, RightUpper, RightLower, LeftCover, RightCover
 };
 
 // map TaskState values to JSON as strings
@@ -33,6 +33,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM(EyelashLocationType, {
     {EyelashLocationType::LeftLower, "LeftLower"},
     {EyelashLocationType::RightUpper, "RightUpper"},
     {EyelashLocationType::RightLower, "RightLower"},
+    {EyelashLocationType::LeftCover, "LeftCover"},
+    {EyelashLocationType::RightCover, "RightCover"},
 })
 
 using MeshColType = std::vector<std::uint32_t>;

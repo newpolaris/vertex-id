@@ -43,9 +43,12 @@ static float fontSize = 15.f;
 #if 0
 constexpr char* s_gpbFilename = "Assets/deconeyelashes.gpb";
 constexpr char* s_gridJson = "Assets/deconeyelashes.json";
-#else
+#elif 0
 constexpr char* s_gpbFilename = "Assets/eyelasheseyecover.gpb";
 constexpr char* s_gridJson = "Assets/eyelasheseyecover.json";
+#else
+constexpr char* s_gpbFilename = "Assets/eyelashesjanst/eyelashesjanst.gpb";
+constexpr char* s_gridJson = "Assets/eyelashesjanst/eyelashesjanst.json";
 #endif
 
 void from_json(const nlohmann::json& j, MeshParam& p) {

@@ -1,0 +1,67 @@
+material textured
+{
+    u_worldViewProjectionMatrix = WORLD_VIEW_PROJECTION_MATRIX
+    sampler u_diffuseTexture
+    {
+        mipmap = true
+        wrapS = CLAMP
+        wrapT = CLAMP
+        minFilter = LINEAR_MIPMAP_LINEAR
+        magFilter = LINEAR
+    }
+
+    renderState
+    {
+        dstBlend = ONE_MINUS_SRC_ALPHA
+        srcBlend = SRC_ALPHA
+        blend = true
+        cullFace = true
+        depthTest = true
+    }
+    technique
+    {
+        pass 
+        {
+            vertexShader = res/shaders/textured.vert
+            fragmentShader = res/shaders/textured.frag
+        }
+    }
+}
+
+material eyelashe : textured
+{
+    sampler u_diffuseTexture
+    {
+        path = Eyelashes.png
+        mipmap = true
+        cubeMap = false
+        wrapS = REPEAT
+        wrapT = REPEAT
+        minFilter = LINEAR_MIPMAP_LINEAR
+        magFilter = LINEAR
+        tileUV = 1.0, 1.0
+        offsetUV = 0.0, 0.0
+    }
+    sampler u_specularTexture
+    {
+        path = Eyelashes_sp.jpg
+        mipmap = true
+        cubeMap = false
+        wrapS = REPEAT
+        wrapT = REPEAT
+        minFilter = LINEAR_MIPMAP_LINEAR
+        magFilter = LINEAR
+        tileUV = 1.0, 1.0
+        offsetUV = 0.0, 0.0
+    }
+    u_inverseTransposeWorldViewMatrix = INVERSE_TRANSPOSE_WORLD_VIEW_MATRIX
+
+    technique
+    {
+        pass 
+        {
+            defines = SPECULAR_MAP;RENDER_MODE_V
+        }
+    }
+}
+
