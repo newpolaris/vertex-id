@@ -47,8 +47,8 @@ constexpr char* s_gridJson = "Assets/deconeyelashes.json";
 constexpr char* s_gpbFilename = "Assets/eyelasheseyecover.gpb";
 constexpr char* s_gridJson = "Assets/eyelasheseyecover.json";
 #else
-constexpr char* s_gpbFilename = "Assets/eyelashesjanst/eyelashesjanst.gpb";
-constexpr char* s_gridJson = "Assets/eyelashesjanst/eyelashesjanst.json";
+constexpr char* s_gpbFilename = "Assets/eyelashesjantw.gpb";
+constexpr char* s_gridJson = "Assets/eyelashesjantw.json";
 #endif
 
 void from_json(const nlohmann::json& j, MeshParam& p) {
