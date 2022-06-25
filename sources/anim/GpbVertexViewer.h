@@ -63,6 +63,7 @@ protected:
     bool mbUpdateParamSelected = true;
     bool mbUpdateMeshCenter = true;
     int mMeshSelected = -1;
+    int mGpbSelected = 0;
 
     Camera mCamera;
     CameraManipulate mCameraControl;
@@ -97,6 +98,7 @@ public:
     bool UpdateVertexGridJson(const std::string& filename);
     void RenderVertexGrid();
 
+    void UpdateGpbSelect(int select);
     void UpdateMeshSelect(int select);
     void UpdateMeshBoundings(int select);
 

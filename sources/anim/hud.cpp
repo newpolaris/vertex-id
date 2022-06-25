@@ -25,6 +25,9 @@ namespace {
     ProgramPtr fullscreenProgram;
     VertexArrayPtr fullscreenVao;
 
+    ProgramPtr gridBgProgram;
+    VertexArrayPtr gridBgProgramVao;
+
     ProgramPtr blitProgram;
     VertexArrayPtr blitVao;
 
@@ -151,6 +154,44 @@ void drawFullscreen() {
     useProgram(fullscreenProgram);
 
     bindVertexArray(fullscreenVao);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+void initGridBackground() {
+    struct FullscreenVertex { float x, y, tu, tv; };
+
+    BufferLayoutDesc layoutDesc({
+        { ShaderDataType::Float2, "a_position" },
+        { ShaderDataType::Float2, "a_texcoord" }
+    });
+
+    std::vector<FullscreenVertex> vertices {
+        { -1, -1, 0, 0 },
+        {  3, -1, 2, 0 },
+        { -1,  3, 0, 2 },
+    };
+
+    gridBgProgram = createProgram({"fullscreen.vs", "gridBackground.fs", layoutDesc});
+
+    // initProgramTextures(gridBgProgram, {"u_texture"});
+
+    auto layout = std::make_shared<BufferLayout>(layoutDesc);
+
+    VertexArrayDesc vaoDesc;
+    vaoDesc.vertexSize = sizeof(FullscreenVertex);
+    vaoDesc.vertexCount = vertices.size();
+    vaoDesc.layout = layout;
+    vaoDesc.vertices = (uint8_t*)vertices.data();
+
+    gridBgProgramVao = createVertexArray(vaoDesc);
+}
+
+void drawGridBackground(glm::vec2 viewport) {
+    useProgram(gridBgProgram);
+    gridBgProgram->setUniform("u_viewport", viewport);
+    gridBgProgram->setUniform("u_clearColor", glm::vec3(0.5f, 0.6f, 0.7f));
+
+    bindVertexArray(gridBgProgramVao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
@@ -432,6 +473,7 @@ void DrawGrid(const glm::mat4& viewProjection)
     glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(16.0f));
 
     glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
     useProgram(gridProgram);
 
     gridProgram->setUniform("u_MVP", viewProjection * model);
@@ -442,6 +484,8 @@ void DrawGrid(const glm::mat4& viewProjection)
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glEnable(GL_CULL_FACE);
     unbindVertexArray(blitVao);
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 void initHUD() {
@@ -450,6 +494,7 @@ void initHUD() {
     initBlit();
     initGrid();
     initFullscreen();
+    initGridBackground();
     initPrimitive();
     initCube();
 }

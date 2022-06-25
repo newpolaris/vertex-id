@@ -19,6 +19,7 @@ void initHUD();
 
 void DrawBlit(const glm::mat4& transform);
 void drawFullscreen();
+void drawGridBackground(glm::vec2 viewport);
 void DrawCircle(glm::vec2 center, glm::vec2 viewport, glm::vec4 color);
 void DrawAxis(const glm::mat4& transform);
 void DrawGrid(const glm::mat4& viewProjection);

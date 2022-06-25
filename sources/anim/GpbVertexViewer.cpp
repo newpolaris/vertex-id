@@ -37,18 +37,35 @@ static float bounds[] = {-0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f};
 static float boundsSnap[] = {0.1f, 0.1f, 0.1f};
 static bool boundSizing = false;
 static bool boundSizingSnap = false;
-static bool showVertexIDs = true;
+static bool showVertexIDs = false;
 static float fontSize = 15.f;
 
+namespace {
+    std::vector<const char*> g_gpbAlias{
+        "box",
+        "sphere",
+        "pig",
+        // "plane0",
+        // "plane1",
+    };
+
+    std::vector<const char*> g_gpbPath{
+        "Assets/Box.gpb",
+        "Assets/Sphere.gpb",
+        "Assets/pig.gpb",
+        // "Assets/plane.gpb",
+        // "Assets/plane.gpb",
+    };
+}
+
+constexpr char* s_gridJson = "Assets/Temp.json";
+
+// TODO: select 가능하게 수정
 #if 0
 constexpr char* s_gpbFilename = "Assets/deconeyelashes.gpb";
 constexpr char* s_gridJson = "Assets/deconeyelashes.json";
-#elif 0
 constexpr char* s_gpbFilename = "Assets/eyelasheseyecover.gpb";
 constexpr char* s_gridJson = "Assets/eyelasheseyecover.json";
-#else
-constexpr char* s_gpbFilename = "Assets/eyelashesjantw.gpb";
-constexpr char* s_gridJson = "Assets/eyelashesjantw.json";
 #endif
 
 void from_json(const nlohmann::json& j, MeshParam& p) {
@@ -125,7 +142,10 @@ void MeshFromGpb(Mesh& outMesh, const el::NodePtr& node)
         texcoords[i] = *(vec2*)(data+texOffset);
     }
 
-    assert(asset->parts.size() == 1);
+    // assert(asset->parts.size() == 1);
+    if (asset->parts.size() != 1) {
+        printf("part count not 1, actual %d\n", (int)asset->parts.size());
+    }
     const auto& sourceIndices = asset->parts.front();
     const auto icount = sourceIndices->indexCount;
 
@@ -232,14 +252,26 @@ void GpbVertexViewer::Initialize() {
     mShader = new Shader("Shaders/static.vert", "Shaders/flat.frag");
     mDisplayTexture = new Texture("Assets/uv.png");
 
-    LoadMeshes(s_gpbFilename);
-
     mCamera.Pitch = -30;
+    mCamera.Yaw += -20;
+    // mCamera.Position = glm::vec3(0.f, 15.f, 20.f);
+    mCamera.Position = glm::vec3(11.4f, 11.4f, 28.f);
     mCamera.updateCameraVectors();
-    mCamera.Position = glm::vec3(0.f, 15.f, 20.f);
 
-    UpdateMeshSelect(0);
-    UpdateMeshBoundings(mMeshSelected);
+    UpdateGpbSelect(0);
+}
+
+void GpbVertexViewer::UpdateGpbSelect(int select) {
+    assert(select >= 0);
+    if (mGpbSelected != select) {
+        mGpbSelected = select;
+    }
+    std::string gpbFilename = g_gpbPath[mGpbSelected];
+
+    LoadMeshes(gpbFilename);
+    UpdateMeshSelect(mMeshSelected);
+    if (mbUpdateMeshCenter)
+        UpdateMeshBoundings(mMeshSelected);
 }
 
 void GpbVertexViewer::UpdateMeshSelect(int select) {
@@ -253,11 +285,13 @@ void GpbVertexViewer::UpdateMeshBoundings(int select) {
     if (select == -1)
         return;
 
-    float radius_new = glm::tan(mCamera.Zoom/2) * mCamera.Position.z;
-    float radius = mMeshInformations[0].radius;
-    float scale = radius_new / radius;
+    float radius_new = glm::tan(mCamera.Zoom/2) * glm::length(mCamera.Position);
+    float radius = mMeshInformations[select].radius;
 
-    // ImGui::Combo("Fit Type", &_fit_current, names.data(), names.size());
+    // TODO: 그래서 조절 가능하게, ImGui export
+    float scale = radius_new / radius / 2.0;
+
+    // TODO: ImGui::Combo("Fit Type", &_fit_current, names.data(), names.size());
 
     // mesh의 center를 화면 중심으로 이동 시키기 위해, center를 이용
     mParent = glm::translate(glm::mat4(1.f), -mMeshInformations[select].center);
@@ -481,6 +515,11 @@ void GpbVertexViewer::Render(float inAspectRatio) {
 
     glm::mat4 viewProjection = projection * view;
 
+    // glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    auto& io = ImGui::GetIO();
+    glm::vec2 viewport(io.DisplaySize.x, io.DisplaySize.y);
+    // drawGridBackground(viewport);
     DrawGrid(viewProjection);
 
     // TODO: OSX에서 에러 발견하여서 임시로 수정함, 이걸만들때 vao가 8번이라서 확인후 여기서도 8로 해둔듯
@@ -528,6 +567,12 @@ void GpbVertexViewer::ImGui(nk_context* inContext)
     std::vector<const char*> meshNames;
     for (const auto& info : mMeshInformations)
         meshNames.push_back(info.id.c_str());
+
+    int gpbSelected = mGpbSelected;
+    if (ImGui::Combo("gpb", &gpbSelected, g_gpbAlias.data(), g_gpbAlias.size())) {
+        UpdateGpbSelect(gpbSelected);
+    }
+
     if (ImGui::Combo("meshes", &mMeshSelected, meshNames.data(), meshNames.size())) {
         if (mbUpdateMeshCenter)
             UpdateMeshBoundings(mMeshSelected);
