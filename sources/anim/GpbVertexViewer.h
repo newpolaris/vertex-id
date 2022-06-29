@@ -60,6 +60,8 @@ protected:
 	Texture* mDisplayTexture;
 
     size_t s_frameCounter = 0;
+
+    float mRadiusScale = 0.5f;
     bool mbUpdateParamSelected = true;
     bool mbUpdateMeshCenter = true;
     int mMeshSelected = -1;

@@ -60,7 +60,6 @@ namespace {
 
 constexpr char* s_gridJson = "Assets/Temp.json";
 
-// TODO: select 가능하게 수정
 #if 0
 constexpr char* s_gpbFilename = "Assets/deconeyelashes.gpb";
 constexpr char* s_gridJson = "Assets/deconeyelashes.json";
@@ -252,10 +251,10 @@ void GpbVertexViewer::Initialize() {
     mShader = new Shader("Shaders/static.vert", "Shaders/flat.frag");
     mDisplayTexture = new Texture("Assets/uv.png");
 
-    mCamera.Pitch = -30;
-    mCamera.Yaw += -20;
+    mCamera.Pitch = -28.5f;
+    mCamera.Yaw = -114.f;
     // mCamera.Position = glm::vec3(0.f, 15.f, 20.f);
-    mCamera.Position = glm::vec3(11.4f, 11.4f, 28.f);
+    mCamera.Position = glm::vec3(12.0f, 15.7f, 25.7f);
     mCamera.updateCameraVectors();
 
     UpdateGpbSelect(0);
@@ -285,13 +284,15 @@ void GpbVertexViewer::UpdateMeshBoundings(int select) {
     if (select == -1)
         return;
 
-    float radius_new = glm::tan(mCamera.Zoom/2) * glm::length(mCamera.Position);
-    float radius = mMeshInformations[select].radius;
+    float fovy = mCamera.Zoom;
+    float radius_new = glm::tan(fovy/2) * glm::length(mCamera.Position);
+    float radius_min = std::min(radius_new, radius_new * mCamera.Aspect);
 
-    // TODO: 그래서 조절 가능하게, ImGui export
-    float scale = radius_new / radius / 2.0;
+    const float radius = mMeshInformations[select].radius;
 
-    // TODO: ImGui::Combo("Fit Type", &_fit_current, names.data(), names.size());
+    float scale = radius_min / radius * mRadiusScale;
+
+    // ImGui::Combo("Fit Type", &_fit_current, names.data(), names.size());
 
     // mesh의 center를 화면 중심으로 이동 시키기 위해, center를 이용
     mParent = glm::translate(glm::mat4(1.f), -mMeshInformations[select].center);
@@ -519,7 +520,7 @@ void GpbVertexViewer::Render(float inAspectRatio) {
     glDisable(GL_DEPTH_TEST);
     auto& io = ImGui::GetIO();
     glm::vec2 viewport(io.DisplaySize.x, io.DisplaySize.y);
-    // drawGridBackground(viewport);
+    drawGridBackground(viewport);
     DrawGrid(viewProjection);
 
     // TODO: OSX에서 에러 발견하여서 임시로 수정함, 이걸만들때 vao가 8번이라서 확인후 여기서도 8로 해둔듯
@@ -534,7 +535,8 @@ void GpbVertexViewer::Render(float inAspectRatio) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDisable(GL_CULL_FACE);
 
-    for (unsigned int i = 0, size = (unsigned int)mMeshes.size(); i < size; ++i) {
+    int meshCount = (int)mMeshInformations.size();
+    for (unsigned int i = 0, size = (unsigned int)meshCount; i < size; ++i) {
         if (i != mMeshSelected)
             continue;
 
@@ -549,11 +551,29 @@ void GpbVertexViewer::Render(float inAspectRatio) {
         mMeshes[i].UnBind(mShader->GetAttribute("position"), normals, texcoords, weights, influences);
     }
     
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_CULL_FACE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // mDisplayTexture->UnSet(0);
     mShader->UnBind();
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDisable(GL_CULL_FACE);
+
+    for (unsigned int i = 0, size = (unsigned int)meshCount; i < size; ++i) {
+        if (i != mMeshSelected)
+            continue;
+        const auto& info = mMeshInformations[i];
+
+        glm::mat4 view = mCamera.GetViewMatrix();
+        glm::mat4 projection = mCamera.GetProjectionMatrix();
+        glm::mat4 mvp = projection * view * mModel * mParent;
+
+        DrawSphere(mvp, info.center, info.radius);
+    }
+
+    glEnable(GL_CULL_FACE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void GpbVertexViewer::ImGui(nk_context* inContext) 
@@ -561,6 +581,9 @@ void GpbVertexViewer::ImGui(nk_context* inContext)
     ImGui::Begin("Control");
     ImGui::Text("Camera:");
     ImGui::InputFloat3("Pos", (float*)&mCamera.Position);
+    ImGui::InputFloat("Pitch", &mCamera.Pitch);
+    ImGui::InputFloat("Yaw", &mCamera.Yaw);
+    ImGui::InputFloat("Aspect", &mCamera.Aspect);
     ImGui::Separator();
 
     int meshCount = (int)mMeshInformations.size();
@@ -592,6 +615,13 @@ void GpbVertexViewer::ImGui(nk_context* inContext)
         paramNames.push_back(names.c_str());
     if (ImGui::Combo("params", &mMeshParamSelected, paramNames.data(), paramNames.size())) {
     }
+    if (ImGui::SliderFloat("Bound scale", &mRadiusScale, 0.01, 3.f))
+        ;
+
+    {
+        UpdateMeshBoundings(mMeshSelected);
+    }
+
     ImGui::Checkbox("Update Mesh Center", &mbUpdateMeshCenter);
     ImGui::Checkbox("Sync Param Select", &mbUpdateParamSelected);
 

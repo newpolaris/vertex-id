@@ -29,9 +29,12 @@ bool check_coords2(vec2 coord, vec2 block_size) {
 void main() {
     vec4 one_color;
     vec4 two_color;
-    vec2 coord = v_texcoord * u_viewport; // vec2(995, 684);
 
-  	vec2 block_size = vec2(20.0,20.0);
+    vec2 coord = vec2(1, 1) - v_texcoord;
+    coord = coord * u_viewport; // vec2(995, 684);
+    coord = coord + vec2(5, 5);
+
+  	vec2 block_size = vec2(10.0, 10.0);
     
     one_color.rgb = u_clearColor;
     one_color.a = 1.0;
